@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   SafeAreaView,
@@ -7,19 +7,43 @@ import {
   TextInput,
   Pressable,
   Platform,
+  Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import styles from "../GlobalStyles";
 
-const FormExpense = ({ setModal, handleExpense }) => {
+const FormExpense = ({
+  setModal,
+  handleExpense,
+  selectedExpense,
+  categories,
+  setSelectedExpense,
+  deleteExpense,
+}) => {
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [category, setCategory] = useState("ahorro");
+  const [category, setCategory] = useState("");
+
+  const resetForm = () => {
+    setModal({ visible: false, type: "" });
+    setSelectedExpense({});
+    setName("");
+    setQuantity("");
+    setCategory("");
+  };
+
+  useEffect(() => {
+    if (selectedExpense?.id) {
+      setName(selectedExpense.name);
+      setQuantity(selectedExpense.quantity);
+      setCategory(selectedExpense.category);
+    }
+  }, [selectedExpense]);
 
   return (
     <SafeAreaView className="flex-1">
       <Text className="text-2xl text-center text-blue-800 my-4">
-        Add new expense
+        {selectedExpense.id ? "Edit expense" : "Add new expense"}
       </Text>
       <View
         style={Platform.OS === "android" ? styles.androidShadow : null}
@@ -46,7 +70,7 @@ const FormExpense = ({ setModal, handleExpense }) => {
           className="border border-gray-200 bg-white rounded-lg p-2 mt-2 shadow "
           placeholder="Expense name (e.g. Food)"
           keyboardType="numeric"
-            value={quantity.toString()}
+          value={quantity.toString()}
           onChangeText={(quantity) => setQuantity(quantity)}
         />
 
@@ -55,40 +79,26 @@ const FormExpense = ({ setModal, handleExpense }) => {
         </Text>
 
         <View className="bg-white border border-gray-200 rounded-lg shadow">
-          {Platform.OS === "android" ? (
-            <Picker
-              itemStyle={styles2.itemStyle}
-              selectedValue={category}
-              onValueChange={(itemValue) => setCategory(itemValue)}
-            >
-              <Picker.Item label="Select" value="" />
-              <Picker.Item label="Alimentación" value="alimentacion" />
-              <Picker.Item label="Auto" value="auto" />
-              <Picker.Item label="Belleza" value="belleza" />
-              <Picker.Item label="Casa" value="casa" />
-              <Picker.Item label="Cine" value="cine" />
-            </Picker>
-          ) : (
-            <Picker
-              itemStyle={styles2.itemStyle}
-              selectedValue={category}
-              onValueChange={(itemValue) => setCategory(itemValue)}
-            >
-              <Picker.Item label="Ahorro" value="ahorro" />
-              <Picker.Item label="Alimentación" value="alimentacion" />
-              <Picker.Item label="Auto" value="auto" />
-              <Picker.Item label="Belleza" value="belleza" />
-              <Picker.Item label="Casa" value="casa" />
-              <Picker.Item label="Cine" value="cine" />
-            </Picker>
-          )}
+          <Picker
+            itemStyle={styles2.itemStyle}
+            selectedValue={category}
+            onValueChange={(itemValue) => setCategory(itemValue)}
+          >
+            {categories.map((category) => (
+              <Picker.Item
+                key={category.id}
+                label={category.name}
+                value={category.name}
+              />
+            ))}
+          </Picker>
         </View>
 
         <Pressable
           className="bg-white py-2 rounded-lg mt-10 active:bg-blue-50 border border-blue-400"
           onPress={() => {
             handleExpense({
-              id: new Date().getTime(),
+              id: selectedExpense.id ? selectedExpense.id : Date.now(),
               date: new Date(),
               name,
               quantity: Number(quantity),
@@ -97,15 +107,38 @@ const FormExpense = ({ setModal, handleExpense }) => {
           }}
         >
           <Text className="text-center text-lg text-blue-800 font-bold">
-            Add expense
+            {selectedExpense.id ? "Save expense" : "Add expense"}
           </Text>
         </Pressable>
+
+        {selectedExpense.id ? (
+          <Pressable
+            className="bg-white py-2 rounded-lg mt-2 active:bg-blue-50 border border-red-400"
+            onPress={() => {
+              Alert.alert(
+                "Delete expense",
+                "Are you sure you want to delete this expense?",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Delete",
+                    onPress: () => deleteExpense(selectedExpense.id),
+                  },
+                ]
+              );
+            }}
+          >
+            <Text className="text-center text-lg text-red-400 font-bold">
+              Delete Expense
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {Platform.OS === "android" ? (
         <Pressable
           className="bg-red-400 py-2 rounded-lg mt-10 mx-4 fixed bottom-[-220px] active:bg-red-600 w-11/12"
-          onPress={() => setModal({ visible: false, type: "" })}
+          onPress={() => resetForm()}
         >
           <Text className="text-center text-lg text-white font-bold">
             Cancel
@@ -114,7 +147,7 @@ const FormExpense = ({ setModal, handleExpense }) => {
       ) : (
         <Pressable
           className="bg-red-400 py-2 rounded-lg mt-10 mx-4 absolute bottom-20 active:bg-red-600 w-11/12"
-          onPress={() => setModal({ visible: false, type: "" })}
+          onPress={() => resetForm()}
         >
           <Text className="text-center text-lg text-white font-bold">
             Cancel

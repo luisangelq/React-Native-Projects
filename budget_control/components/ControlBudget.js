@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, Image, Pressable, Platform } from "react-native";
 import formatCurrency from "../helpers/formatCurrency";
 import styles from "../GlobalStyles";
+import CircularProgress from "react-native-circular-progress-indicator";
 
 const ControlBudget = ({ budget, expenses, setModal }) => {
   const [available, setAvailable] = useState(0);
@@ -24,22 +25,37 @@ const ControlBudget = ({ budget, expenses, setModal }) => {
     setSpent(totalExpenses);
   };
 
+  const calculatePercentage = () => {
+    const percentage = (spent / budget) * 100;
+    return percentage;
+  }
+
   useEffect(() => {
     calculateAvailable();
     calculateSpent();
-  }, []);
+  }, [expenses]);
 
   return (
-    <View className="bg-blue-200">
+    <View className="bg-blue-200 ">
       <View
         className=" bg-white rounded-lg mx-4 p-8 translate-y-14 shadow"
         // apply shadow to iOS
         style={Platform.OS === "android" ? styles.androidShadow : null}
       >
-        <Image
-          className="mx-auto h-[200] w-[200]"
-          source={require("../assets/img/grafico.jpg")}
-        />
+        <View className="mx-auto">
+          <CircularProgress
+            value={calculatePercentage() > 100 ? 100 : calculatePercentage()}
+            radius={100}
+            duration={1000}
+            valueSuffix={"%"}
+            inActiveStrokeColor={"#F1F2F5"}
+            inActiveStrokeWidth={20}
+            activeStrokeColor={"#2D78EF"}
+            activeStrokeWidth={20}
+            maxValue={100}
+
+          />
+        </View>
 
         <View className="bg-gray-100 mt-5 rounded-lg py-4">
           <View className=" my-2">
